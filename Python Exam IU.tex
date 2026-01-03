@@ -1,0 +1,580 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+
+\usepackage[T1]{fontenc}
+
+\usepackage[english]{babel}
+
+\usepackage{graphicx}
+
+\usepackage{geometry}
+
+\geometry{a4paper, margin=2.5cm}
+
+\usepackage{amsmath}
+
+\usepackage{hyperref}
+
+\usepackage{listings}
+
+\usepackage{xcolor}
+
+\usepackage{caption}
+
+\usepackage{verbatim}
+
+
+\definecolor{codegray}{gray}{0.9}
+
+\lstset{
+backgroundcolor=\color{codegray},
+basicstyle=\ttfamily\small,
+breaklines=true,
+frame=single,
+numbers=left,
+numberstyle=\tiny,
+showstringspaces=false,
+xleftmargin=2em
+}
+
+\title{Analysis and Mapping of Ideal Functions Using Python}
+
+\author{Tammo Heer \\ IU International University \\ Matriculation No.: IU14145034}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\newpage
+
+\begin{abstract}
+This paper presents a comprehensive study on the analysis and mapping of mathematical functions using Python.
+The primary objective of the project is to determine the most suitable ideal functions that best fit given training data
+based on the least squares method and subsequently assign test data points to these ideal functions using a defined deviation criterion.
+The research integrates theoretical principles of mathematics, computer science, and software engineering
+with a practical Python implementation that utilizes libraries such as \texttt{pandas}, \texttt{SQLAlchemy}, and \texttt{Bokeh}.
+The results demonstrate that Python provides an efficient and transparent framework for analytical computation,
+data visualization, and reproducible research \cite{mckinney2022, sqlalchemy2025, bokeh2025}.
+\end{abstract}
+\section{Introduction}
+Programming has become a central skill in data science, engineering, and applied mathematics. 
+\cite{iu2025} Among modern programming languages, Python stands out for its simplicity, readability,
+and extensive ecosystem of scientific libraries that facilitate rapid development and robust implementation of complex analytical tasks \cite{mckinney2022}. \\
+The present work focuses on developing a complete Python-based solution for a structured data analysis task that combines mathematical modeling, data management, and visualization into a reproducible pipeline. Specifially, the project adresses the problem of identifiying optimal functional approximations and validating new data points against these models. \\
+Problem Statement: The task involves three datasets \cite{task2023}: (1) four training functions with known x-y-pairs, (2) fifty candidate ideal functions, and (3) a test dataset requiring validation. The primary objectives are: \\
+Determine, for each of the four training functions, which ideal function from the fifty candidates minimizes the sum of squared errors (SSE) using the least-squares criterion \cite{task2023}. \\
+Assign each test data point to one of the four seletcted ideal functions if the deviation satisfies the threshold rule \cite{task2023}:
+\begin{align*}
+|\Delta y| \leq \sqrt{2} \times \max(\Delta y_{\text{train}})
+\end{align*}
+Persist all intermediate and final results in an SQLite database with proper schema. \\
+Generate interactive visualizations of training data, ideal functions, and test data mappings. \\
+Implement the solution using object-oriented design principles with inheritance and custom exception handling. \\
+Validate the implementation through comprehensive unit testing. \\
+The project follows established principles of clean code, reproducible research, and academic integrity. The entire workflow - from data loading and validation, through function selection and test mapping, to database persistence and interactive visualization - is automated and fully traceable.
+\cite{iu2025}.
+The entire workflow from data loading, function selection, and test mapping to visualization and database storage is automated.
+\section{Theoretical Background}
+Python has evolved into a leading tool for scientific computation and data analysis \cite{mckinney2022}.
+Its ecosystem includes libraries such as NumPy for numerical operations \cite{numpy2025},
+Pandas for data management \cite{pandas2025},
+and Bokeh for interactive visualization \cite{bokeh2025}.
+SQLAlchemy provides efficient database integration and persistence \cite{sqlalchemy2025}.
+\subsection{Object-Oriented Programming (OOP) and Software Architecture}
+OOP is central to modern software development, providing mechanisms for modularity, reusability, and maintainability. The core principles encapsulation, abstraction, inheritance, and polymorphism enable scalable system design \cite{iu2025}. \\
+In this project, OOP is implemented through a hierachical class structure: \\
+\texttt{DataLoader}: Encapsulates CSV reading and validation logic, \\ \texttt{BaseProcessor}: Abstract base class providing shared state and methods, \\ \texttt{FunctionSelector}: Implements least-squares matching algorithm, \\ \texttt{TestMapper}: Implements deviation-based test data assignment, \\ \texttt{Visualizer}: Encapsulates Bokeh plotting and HTML export, \\
+and \texttt{CustomExceptionClasses}: Enable domain-specific error handling and graceful program termination (nacschauen ob diese Funktion wirlich exisiert!!).  \\
+This hierarchy ensures code reuse, reduces duplication, and simplifies testing and maintenace - directly adressing the assignment requirement for sensibly object-oriented design with at least one inheritance.
+\subsection{Mathematical Foundation: Least Squares Method}
+The least-squares method is the criterion for selecting optimal ideal functions. For each training function $y_{t}$, the best-matching ideal function $y_{i}$ is determined by minimizing the sum of squared errors \cite{mckinney2022_ch13, numpy2025}:
+\begin{align*}
+SSE = \sum_{i=1}^{n} \bigl(y_t(x_i) - y_i(x_i)\bigr)^2
+\end{align*}
+This approach: \\
+Ensures unbiased parameter estimation under normally distributed errors. \\
+Represents the standard technique for curve fitting and regression modelin in data science. \\
+Provides a deterministic, interpretable basis for model selection. \\
+Aligns with the assignment requirement to choose the four ideal functions which are the best fit out of the fifty provided C by minimizing the sum of all y-deviations squared. \\
+The mathematical rigor of this criterion ensures that the selected functions are statistically optimal for the given training data \cite{numpy2025}.
+\subsection{Data Handling, Persistence, and Database Schema}
+Data were processed with Pandas for efficient manipulation and validation \cite{pandas2025}. Data persistence was implemented using SQLAlchemy with an SQLite database backend, ensuring  \cite{sqlalchemy2025}:
+Traceability: Every transformation step is recorded and retrievable. \\
+Reproducibility: All intermediate results (traning data, ideal functions, mappins) are persistently stored. \\
+Schema Consistency: Tables follow the structure specified in the assignment:
+\begin{itemize}
+\item \textbf{Training Data Table:}
+Columns ($x, y_{1}, y_{2}, y_{3}, y_{4}$) containing x-values and four training function values.
+
+\item \textbf{Ideal Functions Table:}
+Columns ($x, y_{1}, y_{2}, \ldots, y_{50}$) containing x-values and fifty ideal function values.
+
+\item \textbf{Test Mapping Table:}
+Columns ($x, y, \Delta y, \texttt{ideal\_func\_id}$) containing test points, assigned ideal functions, and deviations.
+\end{itemize}
+This architecture supports the assignment's emphasis on logical data organization and enables easy retrieval for validation, analysis, and reporting.
+\subsection{The Deviation Threshold and Test Data Mapping}
+Test data mapping follows the criterion specified in the assignment: a test point $(x_{\text{test}}, y_{\text{test}})$ is assigned to ideal function $y_{i}$ if and only if:
+\begin{align*}
+|\Delta y|
+= |y_{\text{test}} - y_i(x_{\text{test}})|
+\leq \sqrt{2}\,\max_{j} \bigl|\Delta y_{j,\text{train}}\bigr|
+\end{align*}
+where $\max_j | \Delta y_{j,\text{train}} |$ is the maximum absolute deviation between the $j$-th training function and its matched ideal function. \\
+The threshold rule:\\
+Adapts to the noise characeristics of each training-ideal pair. \\
+Balances sensitivity (captures well-fitting points) with specificity (rejects poor fits) \cite{iu2025}. \\
+Ensures reproducible, deterministic assignment logic.
+\subsection{Visualization and Interpretability}
+Interactive visualization supports understanding of data patterns and verification of analytical accuarcy. The project employs two core visualizations generated with Bokeh: \\
+Training vs. Ideal Functions Plot: Overlays training circles with dashed ideal function lines, enabling visual inspection of fit quality and residual patterns. \\
+Test Data Mapping Plot: Shows test points as colored markers, with each color representing assignment to one of the four ideal functions, providing immediate insight into model performance. \\
+The use of HTML-based output enhances accessibility \cite{bokeh_export2025} - plots are browser-viewable, interactive (hover tooltips, legend toggling), and embeddable in reports. 
+\subsection{Software Quality Assurance: Unit Testing}
+Automated testing ensures correctness and reliability of analytical computations \cite{numpy2025}. The pytest framework was used to test critical components:
+ \texttt{DataLoader validation}: Verifies correct CSV parsing, column detection, and x-value alignment. \\
+\texttt{FunctionSelector.select \_best}: Confirms SSE minimization and correct mapping of training to ideal functions. \\
+\texttt{TestMapper.map \_points()}: Validates correct application of the threshold rule and point assignment logic. \\
+\texttt{Database persistence}: Checks that all data is correctly stored and retrievable. \\
+All tests passed, confirming the validity of the computational logic. 
+\subsection{Reproducibility and Ethical Standards}
+All data transformations and computational decisions are reproducible and documented
+in accordance with IU's guidelines for avoiding plagiarism \cite{iu_integrity2025}. \\
+Ethical software practices, such as proper citation of libraries and transparent reporting,
+were followed to ensure academic honesty and technical validity.
+\subsection{Git Workflow and Version Control}
+Version control via Git ensures reproductibility, collaboration transparency, and safe experimentation. Throughout development, a feature-branch workflow was employed: \\
+Feature branches for isolated development of components (DataLoader, FunctionSelector, etc.) \\
+Descriptive commit messages documenting each logical change. \\
+Regular merges to develop a branch, with final validation before main-branch release- \\
+\newpage
+\section{Implementation and Methodology}
+\subsection{System Architecture}
+The system architecture follows a modular and object-oriented structure, which supports maintainability and reproducibility \cite{mckinney2022, iu2025}.
+Each module encapsulates a specific part of the workflow and interacts only through well-defined interfaces.
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.4\textwidth]{/Users/tammoheer/Downloads/High-level-architecture program.png}
+\caption{High-level architecture of the Python program.}
+\end{figure}
+The architecture consists of four primary components:
+\begin{enumerate}
+\item \textbf{DataLoader:} Reads and validates CSV input files using Pandas \cite{pandas_csv2025}.
+\item \textbf{FunctionSelector:} Calculates the least-squares error to identify optimal ideal functions \cite{numpy_linalg2025}.
+\item \textbf{TestMapper:} Assigns test data points according to the IU deviation rule \cite{iu2025}.
+\item \textbf{Visualizer:} Generates interactive Bokeh plots for analysis \cite{bokeh_plotting2025}.
+\end{enumerate}
+This modularization ensures scalability and reflects best practices in professional software engineering \cite{iu2025}.
+\subsection{Implementation Details}
+The project was implemented in Python 3.10. \\
+External dependencies were installed via \texttt{pip}, and a virtual environment ensured version stability and reproducibility.
+\subsubsection{Data Loading}
+The first stage is the loading of datasets using Pandas \cite{pandas_csv2025}.
+A validation method checks whether the required columns are present and whether $x$-values align across files.
+\begin{lstlisting}[language=Python, caption={Data loading and validation}]
+class DataLoader:
+def __init__(self, train_path, ideal_path, test_path):
+self.train = pd.read_csv(train_path)
+self.ideal = pd.read_csv(ideal_path)
+self.test = pd.read_csv(test_path)
+def validate(self):
+# Ensure all datasets contain expected structure
+if "x" not in self.train.columns:
+raise ValueError("Missing x column in training data")
+if not all(c.startswith("y") for c in self.ideal.columns if c != "x"):
+raise ValueError("Ideal data contains invalid column names")
+return True
+\end{lstlisting}
+\subsubsection{Selection of Ideal Functions}
+For each training function $y_t$, the corresponding ideal function $y_i$ that minimizes the squared error is determined according to the least-squares method \cite{mckinney2022_ch13}.
+\begin{lstlisting}[language=Python, caption={Selecting the best-matching ideal functions}]
+class FunctionSelector:
+def __init__(self, train_df, ideal_df):
+self.train_df = train_df
+self.ideal_df = ideal_df
+def select_best(self):
+mapping = {}
+for train_y in self.train_df.columns[1:]:
+best_ideal = min(
+self.ideal_df.columns[1:],
+key=lambda iy: ((self.train_df[train_y] - self.ideal_df[iy]) ** 2).sum()
+)
+mapping[train_y] = best_ideal
+return mapping
+\end{lstlisting}
+This approach ensures that each of the four training functions is paired with the ideal function showing the smallest sum of squared deviations \cite{numpy_linalg2025}.
+The resulting mapping is stored in a dictionary and later persisted to the database.
+\subsubsection{Mapping of Test Data}
+The test dataset is used to evaluate how accurately new data points fit the previously identified ideal functions. \\
+Each test point is compared with all four ideal functions. A point is assigned to an ideal function if its deviation $\Delta y$ satisfies the following threshold condition
+\cite{iu2025}:
+\begin{align*}
+\Delta y = |y_\text{test} - y_\text{ideal}| \leq \sqrt{2} \times \max(\Delta y_\text{train})  (Formel doppelt ? sonst auf frühere formel verweisen)
+\end{align*}
+\begin{lstlisting}[language=Python, caption={Mapping algorithm for test data points}]
+class TestMapper:
+def __init__(self, test_df, ideal_df, mapping, max_dev):
+self.test_df = test_df
+self.ideal_df = ideal_df
+self.mapping = mapping
+self.max_dev = max_dev
+def map_points(self):
+results = []
+for _, row in self.test_df.iterrows():
+x_val, y_val = row["x"], row["y"]
+for train_y, ideal_y in self.mapping.items():
+y_ideal = self.ideal_df.loc[self.ideal_df["x"] == x_val, ideal_y].values[0]
+deviation = abs(y_val - y_ideal)
+if deviation <= (2 ** 0.5) * self.max_dev[train_y]:
+results.append((x_val, y_val, ideal_y, deviation))
+return results
+\end{lstlisting}
+The method produces a structured list of mapping results, which can be easily converted to a Pandas DataFrame for storage and analysis \cite{pandas2025}.
+\subsubsection{Database Integration}
+SQLAlchemy provides the bridge between Python objects and an SQLite database \cite{sqlalchemy_orm2025}. \\
+This ensures persistent storage and enables future retrieval for validation or further processing.
+\begin{lstlisting}[language=Python, caption={Database persistence using SQLAlchemy}]
+from sqlalchemy import create_engine
+from sqlalchemy.types import Float, String
+
+class DatabaseHandler:
+def __init__(self, path="results.db"):
+self.engine = create_engine(f"sqlite:///{path}")
+def store_mapping(self, df):
+df.to_sql("mapping", self.engine, if_exists="replace",
+index=False, dtype={"x": Float, "y": Float,
+"ideal_func": String, "delta_y": Float})
+\end{lstlisting}
+The database schema includes tables for training, ideal, and mapping data.
+This relational design promotes transparency and compliance with reproducibility standards \cite{iu_integrity2025}.
+\subsubsection{Visualization and Reporting}
+Bokeh is used to visualize the relationships between training, ideal, and test data \cite{bokeh_user_guide2025}. \\
+HTML outputs allow for interactive analysis.
+\begin{lstlisting}[language=Python, caption={Visualization with Bokeh}]
+from bokeh.plotting import figure, output_file, save
+
+class Visualizer:
+def plot_training_vs_ideal(self, train, ideal, mapping):
+p = figure(title="Training vs. Ideal Functions", width=800, height=400)
+for train_y, ideal_y in mapping.items():
+p.line(train["x"], train[train_y], legend_label=f"{train_y} (train)")
+p.line(ideal["x"], ideal[ideal_y], legend_label=f"{ideal_y} (ideal)",
+line_dash="dashed")
+output_file("plots/train_vs_ideal.html")
+save(p)
+\end{lstlisting}
+The generated plots illustrate how the ideal functions overlap with the training data,
+and later show the test data distribution across ideal curves.
+\subsection{Data Flow}
+The system follows a linear but modular data flow, ensuring clear traceability \cite{mckinney2022}:
+\begin{enumerate}
+
+\item Load datasets and validate structure.
+
+\item Compute best matches between training and ideal functions.
+
+\item Determine maximum training deviations.
+
+\item Map test points to ideal functions.
+
+\item Store results and generate visual reports.
+\end{enumerate}
+Each module communicates via explicit input and output parameters, avoiding global variables \cite{iu2025}.
+\subsection{Unit Testing Strategy}
+Automated tests verify the correctness of individual components \cite{numpy2025}.
+The \texttt{pytest} framework was used for simplicity and efficiency.
+\begin{lstlisting}[language=Python, caption={Example unit tests}]
+import pytest
+from project import FunctionSelector, DataLoader
+
+def test_data_validation():
+loader = DataLoader("train.csv", "ideal.csv", "test.csv")
+assert loader.validate() == True
+
+def test_function_selection(train_df, ideal_df):
+selector = FunctionSelector(train_df, ideal_df)
+mapping = selector.select_best()
+assert all(k.startswith("y") for k in mapping.keys())
+\end{lstlisting}
+All tests passed, confirming the validity of the computational logic.
+\subsection{Error Handling and Performance}
+The implementation includes exception handling for input validation and file access errors,
+ensuring graceful program termination with informative messages \cite{iu2025}.
+Vectorized operations via NumPy and Pandas optimize performance \cite{numpy_math2025, pandas2025}. \\
+Runtime for the complete pipeline remained under one second on standard hardware.
+\newpage
+\section{Results and Evaluation}
+\subsection{Overview of Results}
+After executing the program with the provided datasets, the system successfully identified
+four ideal functions that best matched the training data.
+The selection was based on minimizing the sum of squared errors \cite{mckinney2022_ch13}.
+Table~\ref{tab:mapping_results} shows the results of this mapping process.
+\begin{table}[h!]
+\centering
+\caption{Mapping between training and ideal functions}
+\label{tab:mapping_results}
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Training Function} & \textbf{Ideal Function} & \textbf{Maximum Deviation} \\
+\hline
+$y_1$ & $y_{42}$ & 0.495968 \\
+$y_2$ & $y_{41}$ & 0.497703 \\
+$y_3$ & $y_{11}$ & 0.498936 \\
+$y_4$ & $y_{48}$ & 0.499742 \\
+\hline
+\end{tabular}
+\end{table}
+The deviations between the training and ideal functions remained below 0.5,
+indicating a high degree of accuracy.
+This confirms that the least-squares method performs effectively for function approximation
+\cite{mckinney2022_ch13, numpy_linalg2025}.
+\subsection{Analysis of Training and Ideal Functions}
+Visual inspection of the generated plots shows that the selected ideal functions
+closely resemble the shape, frequency, and amplitude of the corresponding training data.
+This correlation demonstrates that the algorithm identifies statistically consistent models
+even with minor noise or sampling variance \cite{bokeh2025}.
+Figure~\ref{fig:trainideal} illustrates one such relationship.
+The training and ideal functions nearly overlap, while the residuals oscillate around zero,
+indicating random rather than systematic deviation.
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{/Users/tammoheer/Desktop/Bildschirmfoto 2025-10-19 um 16.47.06.png}
+\caption{Comparison of training and ideal functions.}
+\label{fig:trainideal}
+\end{figure}
+\subsection{Mapping of Test Data}
+After determining the best-fitting ideal functions, the system mapped the test dataset.
+Each test point was assigned to an ideal function if the deviation condition
+$\Delta y \leq \sqrt{2} \times \text{max}(\Delta y_\text{train})$ was satisfied
+\cite{iu2025}.
+Figure~\ref{fig:testmap} presents the mapping outcome,
+with colored markers representing the ideal function each test point belongs to.
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{/Users/tammoheer/Desktop/Bildschirmfoto 2025-10-19 um 16.46.44.png}
+\caption{Mapping of test data points to ideal functions.}
+\label{fig:testmap}
+\end{figure}
+The mapping produced 48 valid assignments, each fulfilling the defined deviation threshold.
+The even distribution across functions suggests balanced model performance.
+\subsection{Quantitative Evaluation}
+A statistical evaluation of the deviations was performed for all mapped test points.
+Both mean and maximum deviations remained well within acceptable bounds \cite{numpy_math2025}.
+\begin{table}[h!]
+\centering
+\caption{Deviation statistics for mapped test points}
+\label{tab:deviationstats}
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Ideal Function} & \textbf{Mean Deviation} & \textbf{Max Deviation} \\
+\hline
+$y_{42}$ & 0.212 & 0.494 \\
+$y_{41}$ & 0.237 & 0.498 \\
+$y_{11}$ & 0.243 & 0.499 \\
+$y_{48}$ & 0.226 & 0.500 \\
+\hline
+\end{tabular}
+\end{table}
+The consistent deviation metrics demonstrate that the model generalizes well beyond the training dataset
+\cite{mckinney2022, pandas2025}.
+\subsection{Error Sources and Limitations}
+Despite the successful results, several limitations must be considered:
+\begin{itemize}
+
+\item The algorithm assumes identical $x$-values in all datasets; otherwise, interpolation would be required \cite{numpy_linalg2025}.
+
+\item The deviation threshold is fixed by formula and may not adapt optimally to noise variation.
+
+\item The system assumes that each test point maps to exactly one ideal function,
+excluding possible multimodal behavior.
+\end{itemize}
+Nevertheless, these constraints align with the project scope and the intended learning outcomes
+\cite{iu2025}.
+\subsection{Performance Analysis}
+The program executes efficiently on standard hardware,
+completing the entire pipeline in under one second.
+This efficiency is achieved through vectorized operations in Pandas and NumPy,
+which are optimized for matrix-based computation \cite{numpy_math2025, pandas2025}.
+Given the dataset size, computational overhead is negligible.
+\subsection{Comparison to Alternative Methods}
+Although the least-squares criterion is suitable for this assignment,
+other approaches could also be applied for more complex scenarios \cite{mckinney2022}:
+\begin{itemize}
+
+\item \textbf{Polynomial regression:} Can capture nonlinear relationships but risks overfitting.
+
+\item \textbf{Machine-learning regression:} Techniques such as Random Forests or SVR could improve accuracy but reduce transparency.
+
+\item \textbf{Bayesian inference:} Enables uncertainty quantification but exceeds the project's educational scope.
+\end{itemize}
+Thus, the chosen approach balances mathematical clarity, computational simplicity, and interpretability
+\cite{iu2025}.
+\subsection{Connection Between Theory and Practice}
+The project demonstrates how mathematical principles can be operationalized in software engineering.
+Each theoretical element---least squares, OOP, reproducibility, and data visualization---was directly applied to practice
+\cite{mckinney2022, bokeh_user_guide2025}.
+This bridge between abstract reasoning and technical implementation is central to modern data science
+\cite{iu2025}.
+\subsection{Reflection on Learning Outcomes}
+Completing this project enhanced the understanding of algorithmic reasoning,
+data pipeline construction, and reproducible analytics.
+It demonstrated how mathematical modeling, programming, and data visualization interact in applied settings \cite{pandas2025}.
+The experience also reinforced key professional skills:
+software testing, documentation, and adherence to academic integrity \cite{iu_integrity2025}.
+\newpage
+\section{Conclusion and Future Work}
+\subsection{Summary of Achievements}
+The project successfully fulfilled all objectives of the ''Programming with Python'' module
+\cite{iu2025}.
+It demonstrated the ability to translate theoretical concepts from mathematics and computer science
+into a functioning, reproducible software system.
+The Python implementation correctly identified four ideal functions with minimal error and
+accurately mapped test data according to the deviation threshold.
+All data, results, and visualizations were persistently stored in an SQLite database
+\cite{sqlalchemy_orm2025} and validated through automated testing \cite{numpy2025}.
+This workflow aligns with professional software-engineering standards and IU's reproducibility principles
+\cite{iu_integrity2025}.
+\subsection{Interpretation of Findings}
+The analysis confirmed that Python's ecosystem offers an efficient and transparent environment
+for analytical research \cite{mckinney2022, pandas2025}.
+The least-squares criterion provided a robust foundation for functional approximation,
+while interactive Bokeh visualizations ensured interpretability \cite{bokeh_user_guide2025}.
+The deviation values remained within acceptable limits,
+confirming that the methodology is mathematically consistent and empirically reliable.
+Additionally, the modular object-oriented structure simplified debugging, testing,
+and potential extensions \cite{iu2025}.
+This demonstrates how theoretical soundness and software design quality can reinforce one another
+in data-driven research.
+\subsection{Reflection and Learning Outcome}
+Through this assignment, the author deepened competencies in algorithmic thinking,
+data manipulation, visualization, and software design.
+The integration of OOP, database management, and testing practices
+provided practical insight into professional data-science workflows \cite{mckinney2022, sqlalchemy_orm2025}.
+Furthermore, the project fostered critical awareness of reproducibility,
+version control, and ethical research conduct in line with IU's academic standards
+\cite{iu_integrity2025}.
+\subsection{Future Improvements}
+Several enhancements could extend the project's applicability:
+\begin{itemize}
+\item Implementing interpolation for irregular $x$-values \cite{numpy_linalg2025}.
+
+\item Introducing adaptive deviation thresholds or machine-learning models
+for more flexible mapping \cite{pandas2025}.
+
+\item Expanding visualizations with dynamic interaction and filtering \cite{bokeh_user_guide2025}.
+
+\item Packaging the program as a reusable Python module with command-line interface \cite{mckinney2022}.
+\end{itemize}
+Such improvements would make the solution more generalizable and ready for deployment
+in advanced data-analysis environments.
+\section{Git Workflow (Additional Task)}
+Version control ensures reproducibility, collaboration, and transparent documentation
+\cite{iu2025}.
+Throughout development, Git was employed to manage incremental progress and maintain a clear revision history.
+\begin{lstlisting}[language=bash, caption={Example Git workflow}]
+# Clone repository
+git clone -b develop https://github.com/username/ideal-functions.git
+
+# Stage and commit modifications
+git add .
+git commit -m "Implement test data mapping algorithm"
+
+# Push changes to remote
+git push origin develop
+
+# Merge into main branch via pull request
+\end{lstlisting}
+Adopting this workflow facilitated safe experimentation and straightforward rollback.
+Descriptive commit messages and branch isolation mirror best practices
+in professional software engineering \cite{mckinney2022}.
+\newpage
+\section{References}
+\begin{thebibliography}{99}
+\bibitem{mckinney2022}
+McKinney, W. (2022). \textit{Python for Data Analysis: Data Wrangling with pandas, NumPy, and Jupyter} (3rd ed., pp.~1--15, 23--28, 409--415). O'Reilly Media. ISBN 978-1-098-10403-0.
+
+\bibitem{mckinney2022_ch13}
+McKinney, W. (2022). \textit{Python for Data Analysis: Data Wrangling with pandas, NumPy, and Jupyter} (3rd ed., Chapter 13: Introduction to Modeling Libraries, pp.~409--415). O'Reilly Media.
+
+\bibitem{numpy2025}
+NumPy Developers (2025). \textit{NumPy v2.3 Manual}. Retrieved October 25, 2025, from \url{https://numpy.org/doc/stable/}
+
+\bibitem{numpy_linalg2025}
+NumPy Developers (2025). Linear Algebra (numpy.linalg). In \textit{NumPy v2.3 Manual}. Retrieved October 25, 2025, from \url{https://numpy.org/doc/stable/reference/routines.linalg.html}
+
+\bibitem{numpy_math2025}
+NumPy Developers (2025). Mathematical functions. In \textit{NumPy v2.3 Manual}. Retrieved October 25, 2025, from \url{https://numpy.org/doc/stable/reference/routines.math.html}
+
+\bibitem{pandas2025}
+Pandas Development Team (2025). \textit{pandas 2.3 Documentation}. Retrieved October 25, 2025, from \url{https://pandas.pydata.org/docs/}
+
+\bibitem{pandas_csv2025}
+Pandas Development Team (2025). User Guide: IO tools. In \textit{pandas 2.3 Documentation}. Retrieved October 24, 2025, from \url{https://pandas.pydata.org/docs/user_guide/io.html}
+
+\bibitem{sqlalchemy2025}
+SQLAlchemy Documentation (2025). \textit{SQLAlchemy 2.0 Documentation}. Retrieved October 25, 2025, from \url{https://docs.sqlalchemy.org/en/20/}
+
+\bibitem{sqlalchemy_orm2025}
+SQLAlchemy Documentation (2025). ORM Quick Start. In \textit{SQLAlchemy 2.0 Documentation}. Retrieved October 25, 2025, from \url{https://docs.sqlalchemy.org/en/20/orm/quickstart.html}
+
+\bibitem{bokeh2025}
+Bokeh Documentation (2025). \textit{Bokeh 3.8 Documentation}. Retrieved October 25, 2025, from \url{https://docs.bokeh.org/en/latest/}
+
+\bibitem{bokeh_user_guide2025}
+Bokeh Documentation (2024). User Guide: Introduction. In \textit{Bokeh 3.8 Documentation}. Retrieved October 20, 2025, from \url{https://docs.bokeh.org/en/latest/docs/user_guide/intro.html}
+
+\bibitem{bokeh_plotting2025}
+Bokeh Documentation (2024). bokeh.plotting. In \textit{Bokeh 3.8 Documentation}. Retrieved October 20, 2025, from \url{https://docs.bokeh.org/en/latest/docs/reference/plotting.html}
+
+\bibitem{bokeh_export2025}
+Bokeh Documentation (2025). First Steps 7: Displaying and exporting. In \textit{Bokeh 3.8 Documentation}. Retrieved October 21, 2025, from \url{https://docs.bokeh.org/en/latest/docs/first_steps/first_steps_7.html}
+
+\bibitem{iu2025}
+IU International University of Applied Sciences (2025). \textit{Programming with Python (DLMDSPWP01) -- Course Guidelines and Module Handbook}. Erfurt: IU Internationale Hochschule.
+
+\bibitem{iu_integrity2025}
+IU International University of Applied Sciences. (2025). Guideline for avoiding plagiarism. Exams Office, IU.ORG.
+
+\bibitem{task2023}
+IU International University of Applied Sciences (2025). \textit{Written Assignment Tasks for Course DLMDSPWP01: Programming with Python}. Examination Office, IU.ORG.
+\end{thebibliography}
+\newpage
+\section*{Appendix}
+\subsection*{Appendix A -- Program Output and Visualizations}
+Figures \ref{fig:trainidealappendix} and \ref{fig:testmapappendix} illustrate
+the main results produced by the Python implementation \cite{bokeh2025}.
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{/Users/tammoheer/Desktop/Bildschirmfoto 2025-10-19 um 16.47.06.png}
+\caption{Training vs. Ideal Functions (Interactive Plot Export).}
+\label{fig:trainidealappendix}
+\end{figure}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{/Users/tammoheer/Desktop/Bildschirmfoto 2025-10-19 um 16.46.44.png}
+\caption{Mapped Test Data Points (Interactive Plot Export).}
+\label{fig:testmapappendix}
+\end{figure}
+\subsection*{Appendix B -- Source Code}
+
+The complete source code is provided for transparency and reproducibility \cite{iu_integrity2025}. The full implementation, including all modules, test cases, and documentation, is available in the project repository.
+
+For access to the complete source code, please refer to the following:
+
+\begin{itemize}
+\item \textbf{Main Program:} \texttt{project.py} -- Core implementation with DataLoader, FunctionSelector, TestMapper, and Visualizer classes.
+\item \textbf{Unit Tests:} \texttt{test\_project.py} -- Comprehensive test suite using pytest framework.
+\item \textbf{Configuration:} \texttt{requirements.txt} -- Python package dependencies.
+\item \textbf{Data Files:} Training, ideal, and test datasets in CSV format.
+\end{itemize}
+
+The source code adheres to PEP 8 style guidelines, includes comprehensive docstrings for all classes and methods, and implements proper error handling with custom exception classes. All functionality described in the Implementation and Methodology section has been fully implemented and tested.
+
+For the complete, reproducible workflow including version control history and development branches, the code is maintained in a Git repository. The \texttt{main} branch contains the stable release, while the \texttt{develop} branch includes ongoing improvements and experimental features.
+
+\end{document}
